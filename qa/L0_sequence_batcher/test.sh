@@ -47,7 +47,7 @@ RET=0
 
 # Must run on a single device or else the TRTSERVER_DELAY_SCHEDULER
 # can fail when the requests are distributed to multiple devices.
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=""
 
 # Setup non-variable-size model repositories. The same models are in each
 # repository but they are configured as:
@@ -57,14 +57,12 @@ export CUDA_VISIBLE_DEVICES=0
 #   models4 - four instances with batch-size 1
 rm -fr *.log *.serverlog models{0,1,2,4} && mkdir models{0,1,2,4}
 for m in \
-        $DATADIR/qa_sequence_model_repository/plan_sequence_float32 \
         $DATADIR/qa_sequence_model_repository/netdef_sequence_int32 \
         $DATADIR/qa_sequence_model_repository/graphdef_sequence_object \
         $DATADIR/qa_sequence_model_repository/graphdef_sequence_int32 \
         $DATADIR/qa_sequence_model_repository/savedmodel_sequence_float32 \
         $DATADIR/qa_sequence_model_repository/onnx_sequence_int32 \
         $DATADIR/qa_sequence_model_repository/libtorch_sequence_int32 \
-        $DATADIR/qa_ensemble_model_repository/qa_sequence_model_repository/*_plan_sequence_float32 \
         $DATADIR/qa_ensemble_model_repository/qa_sequence_model_repository/*_netdef_sequence_int32 \
         $DATADIR/qa_ensemble_model_repository/qa_sequence_model_repository/*_graphdef_sequence_object \
         $DATADIR/qa_ensemble_model_repository/qa_sequence_model_repository/*_savedmodel_sequence_float32 \
@@ -74,29 +72,27 @@ for m in \
     cp -r $m models1/. && \
         (cd models1/$(basename $m) && \
             sed -i "s/^max_batch_size:.*/max_batch_size: 4/" config.pbtxt && \
-            sed -i "s/kind: KIND_GPU/kind: KIND_GPU\\ncount: 1/" config.pbtxt && \
+            sed -i "s/kind: KIND_GPU/kind: KIND_CPU/" config.pbtxt && \
             sed -i "s/kind: KIND_CPU/kind: KIND_CPU\\ncount: 1/" config.pbtxt)
     cp -r $m models2/. && \
         (cd models2/$(basename $m) && \
             sed -i "s/^max_batch_size:.*/max_batch_size: 2/" config.pbtxt && \
-            sed -i "s/kind: KIND_GPU/kind: KIND_GPU\\ncount: 2/" config.pbtxt && \
+            sed -i "s/kind: KIND_GPU/kind: KIND_CPU/" config.pbtxt && \
             sed -i "s/kind: KIND_CPU/kind: KIND_CPU\\ncount: 2/" config.pbtxt)
     cp -r $m models4/. && \
         (cd models4/$(basename $m) && \
             sed -i "s/^max_batch_size:.*/max_batch_size: 1/" config.pbtxt && \
-            sed -i "s/kind: KIND_GPU/kind: KIND_GPU\\ncount: 4/" config.pbtxt && \
+            sed -i "s/kind: KIND_GPU/kind: KIND_CPU/" config.pbtxt && \
             sed -i "s/kind: KIND_CPU/kind: KIND_CPU\\ncount: 4/" config.pbtxt)
 done
 
 for m in \
-        $DATADIR/qa_sequence_model_repository/plan_nobatch_sequence_float32 \
         $DATADIR/qa_sequence_model_repository/netdef_nobatch_sequence_int32 \
         $DATADIR/qa_sequence_model_repository/graphdef_nobatch_sequence_object \
         $DATADIR/qa_sequence_model_repository/graphdef_nobatch_sequence_int32 \
         $DATADIR/qa_sequence_model_repository/savedmodel_nobatch_sequence_float32 \
         $DATADIR/qa_sequence_model_repository/onnx_nobatch_sequence_int32 \
         $DATADIR/qa_sequence_model_repository/libtorch_nobatch_sequence_int32 \
-        $DATADIR/qa_ensemble_model_repository/qa_sequence_model_repository/*_plan_nobatch_sequence_float32 \
         $DATADIR/qa_ensemble_model_repository/qa_sequence_model_repository/*_netdef_nobatch_sequence_int32 \
         $DATADIR/qa_ensemble_model_repository/qa_sequence_model_repository/*_graphdef_nobatch_sequence_object \
         $DATADIR/qa_ensemble_model_repository/qa_sequence_model_repository/*_graphdef_nobatch_sequence_int32 \
@@ -105,20 +101,18 @@ for m in \
         $DATADIR/qa_ensemble_model_repository/qa_sequence_model_repository/*_libtorch_nobatch_sequence_int32 ; do
     cp -r $m models0/. && \
         (cd models0/$(basename $m) && \
-            sed -i "s/kind: KIND_GPU/kind: KIND_GPU\\ncount: 4/" config.pbtxt && \
+            sed -i "s/kind: KIND_GPU/kind: KIND_CPU/" config.pbtxt && \
             sed -i "s/kind: KIND_CPU/kind: KIND_CPU\\ncount: 4/" config.pbtxt)
 done
 
 #   modelsv - one instance with batch-size 4
 rm -fr modelsv && mkdir modelsv
 for m in \
-        $DATADIR/qa_variable_sequence_model_repository/plan_sequence_float32 \
         $DATADIR/qa_variable_sequence_model_repository/netdef_sequence_int32 \
         $DATADIR/qa_variable_sequence_model_repository/graphdef_sequence_object \
         $DATADIR/qa_variable_sequence_model_repository/savedmodel_sequence_float32 \
         $DATADIR/qa_variable_sequence_model_repository/onnx_sequence_int32 \
         $DATADIR/qa_variable_sequence_model_repository/libtorch_sequence_int32 \
-        $DATADIR/qa_ensemble_model_repository/qa_variable_sequence_model_repository/*_plan_sequence_float32 \
         $DATADIR/qa_ensemble_model_repository/qa_variable_sequence_model_repository/*_netdef_sequence_int32 \
         $DATADIR/qa_ensemble_model_repository/qa_variable_sequence_model_repository/*_graphdef_sequence_object \
         $DATADIR/qa_ensemble_model_repository/qa_variable_sequence_model_repository/*_savedmodel_sequence_float32 \
@@ -127,7 +121,7 @@ for m in \
     cp -r $m modelsv/. && \
         (cd modelsv/$(basename $m) && \
             sed -i "s/^max_batch_size:.*/max_batch_size: 4/" config.pbtxt && \
-            sed -i "s/kind: KIND_GPU/kind: KIND_GPU\\ncount: 1/" config.pbtxt && \
+            sed -i "s/kind: KIND_GPU/kind: KIND_CPU/" config.pbtxt && \
             sed -i "s/kind: KIND_CPU/kind: KIND_CPU\\ncount: 1/" config.pbtxt)
 done
 
@@ -152,37 +146,37 @@ for model_trial in v 0 1 2 4; do
     export BATCHER_TYPE="VARIABLE" &&
         [[ "$model_trial" != "v" ]] && export BATCHER_TYPE="FIXED"
 
-    for i in \
-            test_simple_sequence \
-            test_length1_sequence \
-            test_batch_size \
-            test_no_sequence_start \
-            test_no_sequence_start2 \
-            test_no_sequence_end \
-            test_no_correlation_id ; do
-        SERVER_ARGS="--model-repository=`pwd`/$MODEL_DIR"
-        SERVER_LOG="./$i.$MODEL_DIR.serverlog"
-        run_server
-        if [ "$SERVER_PID" == "0" ]; then
-            echo -e "\n***\n*** Failed to start $SERVER\n***"
-            cat $SERVER_LOG
-            exit 1
-        fi
+    # for i in \
+    #         test_simple_sequence \
+    #         test_length1_sequence \
+    #         test_batch_size \
+    #         test_no_sequence_start \
+    #         test_no_sequence_start2 \
+    #         test_no_sequence_end \
+    #         test_no_correlation_id ; do
+    #     SERVER_ARGS="--model-repository=`pwd`/$MODEL_DIR"
+    #     SERVER_LOG="./$i.$MODEL_DIR.serverlog"
+    #     run_server
+    #     if [ "$SERVER_PID" == "0" ]; then
+    #         echo -e "\n***\n*** Failed to start $SERVER\n***"
+    #         cat $SERVER_LOG
+    #         exit 1
+    #     fi
 
-        echo "Test: $i, repository $MODEL_DIR" >>$CLIENT_LOG
+    #     echo "Test: $i, repository $MODEL_DIR" >>$CLIENT_LOG
 
-        set +e
-        python $BATCHER_TEST SequenceBatcherTest.$i >>$CLIENT_LOG 2>&1
-        if [ $? -ne 0 ]; then
-            echo -e "\n***\n*** Test $i Failed\n***" >>$CLIENT_LOG
-            echo -e "\n***\n*** Test $i Failed\n***"
-            RET=1
-        fi
-        set -e
+    #     set +e
+    #     python $BATCHER_TEST SequenceBatcherTest.$i >>$CLIENT_LOG 2>&1
+    #     if [ $? -ne 0 ]; then
+    #         echo -e "\n***\n*** Test $i Failed\n***" >>$CLIENT_LOG
+    #         echo -e "\n***\n*** Test $i Failed\n***"
+    #         RET=1
+    #     fi
+    #     set -e
 
-        kill $SERVER_PID
-        wait $SERVER_PID
-    done
+    #     kill $SERVER_PID
+    #     wait $SERVER_PID
+    # done
 
     # Tests that require TRTSERVER_DELAY_SCHEDULER so that the
     # scheduler is delayed and requests can collect in the queue.
@@ -206,7 +200,7 @@ for model_trial in v 0 1 2 4; do
             [[ "$i" != "test_backlog_same_correlation_id_no_end" ]] && export TRTSERVER_DELAY_SCHEDULER=8 &&
             [[ "$i" != "test_half_batch" ]] && export TRTSERVER_DELAY_SCHEDULER=4 &&
             [[ "$i" != "test_backlog_sequence_timeout" ]] && export TRTSERVER_DELAY_SCHEDULER=12
-        SERVER_ARGS="--model-repository=`pwd`/$MODEL_DIR"
+        SERVER_ARGS="--model-repository=`pwd`/$MODEL_DIR --log-verbose=1"
         SERVER_LOG="./$i.$MODEL_DIR.serverlog"
         run_server
         if [ "$SERVER_PID" == "0" ]; then
@@ -216,6 +210,7 @@ for model_trial in v 0 1 2 4; do
         fi
 
         echo "Test: $i, repository $MODEL_DIR" >>$CLIENT_LOG
+        echo "Test: $i, repository $MODEL_DIR"
 
         set +e
         python $BATCHER_TEST SequenceBatcherTest.$i >>$CLIENT_LOG 2>&1
