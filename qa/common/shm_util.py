@@ -197,7 +197,7 @@ def create_register_set_either_shm_region(shm_region_names, input_list, input_by
         shared_memory_ctx.register(shm_op_handle)
         # copy data into shared memory region for input values
         shm.set_shared_memory_region(shm_ip_handle, input_list)
-    
+
     return [shm_ip_handle, shm_op_handle]
 
 def destroy_either_shm_region(shm_handle, use_system_shared_memory, use_cuda_shared_memory):
