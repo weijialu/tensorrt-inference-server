@@ -33,26 +33,6 @@ ARG PYTORCH_IMAGE=nvcr.io/nvidia/pytorch:20.01-py3
 ARG TENSORFLOW_IMAGE=nvcr.io/nvidia/tensorflow:20.01-tf1-py3
 
 ############################################################################
-## PyTorch stage: Use PyTorch container for Caffe2 and libtorch
-############################################################################
-FROM ${PYTORCH_IMAGE} AS trtserver_pytorch
-
-# Must rebuild in the pytorch container to disable some features that
-# are not relevant for inferencing and so that OpenCV libraries are
-# not included in the server (which will likely conflict with custom
-# backends using opencv).
-WORKDIR /opt/pytorch
-RUN pip uninstall -y torch
-RUN cd pytorch && \
-    TORCH_CUDA_ARCH_LIST="5.2 6.0 6.1 7.0 7.5+PTX" \
-    CUDA_HOME="/usr/local/cuda" \
-    CMAKE_PREFIX_PATH="$(dirname $(which conda))/../" \
-    USE_DISTRIBUTED=0 USE_MIOPEN=0 USE_NCCL=0 \
-    USE_OPENCV=0 USE_LEVELDB=0 USE_LMDB=0 USE_REDIS=0 \
-    BUILD_TEST=0 \
-    pip install --no-cache-dir -v .
-
-############################################################################
 ## Onnx Runtime stage: Build Onnx Runtime on CUDA 10, CUDNN 7
 ############################################################################
 FROM ${BASE_IMAGE} AS trtserver_onnx
@@ -151,6 +131,11 @@ RUN python3 /workspace/onnxruntime/tools/ci_build/build.py --build_dir /workspac
 ## TensorFlow stage: Use TensorFlow container
 ############################################################################
 FROM ${TENSORFLOW_IMAGE} AS trtserver_tf
+
+############################################################################
+## PyTorch stage: Use PyTorch container for Caffe2 and libtorch
+############################################################################
+FROM ${PYTORCH_IMAGE} AS trtserver_pytorch
 
 ############################################################################
 ## Build stage: Build inference server
