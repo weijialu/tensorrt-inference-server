@@ -147,8 +147,6 @@ RUN python3 /workspace/onnxruntime/tools/ci_build/build.py --build_dir /workspac
             --use_cuda \
             --cuda_home /usr/local/cuda \
             --cudnn_home /usr/local/cudnn-$(echo $CUDNN_VERSION | cut -d. -f1-2)/cuda \
-            --use_tensorrt \
-            --tensorrt_home /usr/src/tensorrt \
             --use_openvino CPU_FP32 \
             --update \
             --build
@@ -300,7 +298,7 @@ RUN LIBCUDA_FOUND=$(ldconfig -p | grep -v compat | awk '{print $1}' | grep libcu
                   -DTRTIS_ENABLE_S3=ON \
                   -DTRTIS_ENABLE_CUSTOM=ON \
                   -DTRTIS_ENABLE_TENSORFLOW=ON \
-                  -DTRTIS_ENABLE_TENSORRT=ON \
+                  -DTRTIS_ENABLE_TENSORRT=OFF \
                   -DTRTIS_ENABLE_CAFFE2=ON \
                   -DTRTIS_ENABLE_ONNXRUNTIME=ON \
                   -DTRTIS_ENABLE_ONNXRUNTIME_OPENVINO=ON \
