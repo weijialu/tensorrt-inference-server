@@ -44,12 +44,12 @@ FROM ${PYTORCH_IMAGE} AS trtserver_pytorch
 WORKDIR /opt/pytorch
 RUN pip uninstall -y torch
 RUN cd pytorch && \
-    TORCH_CUDA_ARCH_LIST="5.2 6.0 6.1 7.0 7.5+PTX" \
+    TORCH_CUDA_ARCH_LIST="5.2 6.0 6.1 7.0 7.5 8.0+PTX" \
     CUDA_HOME="/usr/local/cuda" \
     CMAKE_PREFIX_PATH="$(dirname $(which conda))/../" \
-    USE_DISTRIBUTED=0 USE_MIOPEN=0 USE_NCCL=0 \
-    USE_OPENCV=0 USE_LEVELDB=0 USE_LMDB=0 USE_REDIS=0 \
-    BUILD_TEST=0 \
+    USE_DISTRIBUTED=OFF USE_MIOPEN=OFF USE_NCCL=OFF USE_SYSTEM_NCCL=OFF \
+    USE_OPENCV=OFF USE_LEVELDB=OFF USE_LMDB=OFF USE_REDIS=OFF \
+    BUILD_TEST=OFF \
     pip install --no-cache-dir -v .
 
 ############################################################################
