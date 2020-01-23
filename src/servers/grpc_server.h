@@ -1,4 +1,4 @@
-// Copyright (c) 2019, NVIDIA CORPORATION. All rights reserved.
+// Copyright (c) 2019-2020, NVIDIA CORPORATION. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -75,7 +75,7 @@ class GRPCServer {
   const int infer_allocation_pool_size_;
 
   std::unique_ptr<grpc::ServerCompletionQueue> health_cq_;
-  std::unique_ptr<grpc::ServerCompletionQueue> status_cq_;
+  std::unique_ptr<grpc::ServerCompletionQueue> metadata_cq_;
   std::unique_ptr<grpc::ServerCompletionQueue> repository_cq_;
   std::unique_ptr<grpc::ServerCompletionQueue> infer_cq_;
   std::unique_ptr<grpc::ServerCompletionQueue> stream_infer_cq_;
@@ -85,15 +85,18 @@ class GRPCServer {
   grpc::ServerBuilder grpc_builder_;
   std::unique_ptr<grpc::Server> grpc_server_;
 
-  std::unique_ptr<HandlerBase> health_handler_;
-  std::unique_ptr<HandlerBase> status_handler_;
+  std::unique_ptr<HandlerBase> server_live_handler_;
+  std::unique_ptr<HandlerBase> server_ready_handler_;
+  std::unique_ptr<HandlerBase> model_ready_handler_;
+  std::unique_ptr<HandlerBase> server_metadata_handler_;
+  std::unique_ptr<HandlerBase> model_metadata_handler_;
   std::unique_ptr<HandlerBase> repository_handler_;
   std::unique_ptr<HandlerBase> infer_handler_;
   std::unique_ptr<HandlerBase> stream_infer_handler_;
   std::unique_ptr<HandlerBase> modelcontrol_handler_;
   std::unique_ptr<HandlerBase> shmcontrol_handler_;
 
-  GRPCService::AsyncService service_;
+  GRPCInferenceService::AsyncService service_;
   bool running_;
 };
 
