@@ -115,8 +115,8 @@ if(${TRTIS_ENABLE_HTTP} OR ${TRTIS_ENABLE_METRICS})
   )
   if(${TRTIS_ENABLE_HTTP_V2})
     set(
-      HTTP_ENDPOINT_OBJECTS 
-      ${HTTP_ENDPOINT_OBJECTS} 
+      HTTP_ENDPOINT_OBJECTS
+      ${HTTP_ENDPOINT_OBJECTS}
       $<TARGET_OBJECTS:grpc-library>
     )
   endif() # TRTIS_ENABLE_HTTP_V2
@@ -129,8 +129,8 @@ if(${TRTIS_ENABLE_HTTP} OR ${TRTIS_ENABLE_METRICS})
   )
   if(${TRTIS_ENABLE_HTTP_V2})
     set(
-      HTTP_ENDPOINT_LIBRARIES 
-      ${HTTP_ENDPOINT_LIBRARIES} 
+      HTTP_ENDPOINT_LIBRARIES
+      ${HTTP_ENDPOINT_LIBRARIES}
       PRIVATE gRPC::grpc++
       PRIVATE gRPC::grpc
     )
@@ -420,8 +420,8 @@ if(${TRTIS_ENABLE_S3})
   target_link_libraries(
     trtserver
     PRIVATE aws-cpp-sdk-s3
+    PRIVATE -lre2
   )
-
 endif() # TRTIS_ENABLE_S3
 
 if(${TRTIS_ENABLE_GPU})
