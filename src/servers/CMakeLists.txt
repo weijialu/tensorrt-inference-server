@@ -1,4 +1,4 @@
-# Copyright (c) 2019, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2019-2020, NVIDIA CORPORATION. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -73,9 +73,12 @@ set(HTTP_ENDPOINT_OBJECTS "")
 set(HTTP_ENDPOINT_LIBRARIES "")
 
 if(${TRTIS_ENABLE_HTTP} OR ${TRTIS_ENABLE_METRICS})
-  find_package(libevhtp CONFIG REQUIRED)
-  message(STATUS "Using libevhtp ${libevhtp_VERSION}")
-
+  find_library(H2O_LIB h2o REQUIRED)
+  message(STATUS "Using libh2o ${H2O_LIB}")
+  find_library(UV_LIB uv REQUIRED)
+  message(STATUS "Using libuv ${UV_LIB}")
+  find_package(Threads REQUIRED)
+  find_package(OpenSSL REQUIRED)
   if(${TRTIS_ENABLE_HTTP_V2})
     set(
       HTTP_ENDPOINT_SRCS
@@ -103,9 +106,11 @@ if(${TRTIS_ENABLE_HTTP} OR ${TRTIS_ENABLE_METRICS})
   endif() # TRTIS_ENABLE_GPU
 
   add_dependencies(http-endpoint-library proto-library)
+
   target_include_directories(
     http-endpoint-library
-    PRIVATE $<TARGET_PROPERTY:libevhtp::evhtp,INTERFACE_INCLUDE_DIRECTORIES>
+    PRIVATE h2o
+    PRIVATE uv
   )
 
   set(
@@ -113,24 +118,28 @@ if(${TRTIS_ENABLE_HTTP} OR ${TRTIS_ENABLE_METRICS})
     $<TARGET_OBJECTS:http-endpoint-library>
     $<TARGET_OBJECTS:proto-library>
   )
+
   if(${TRTIS_ENABLE_HTTP_V2})
     set(
-      HTTP_ENDPOINT_OBJECTS 
-      ${HTTP_ENDPOINT_OBJECTS} 
+      HTTP_ENDPOINT_OBJECTS
+      ${HTTP_ENDPOINT_OBJECTS}
       $<TARGET_OBJECTS:grpc-library>
     )
   endif() # TRTIS_ENABLE_HTTP_V2
   set(
     HTTP_ENDPOINT_LIBRARIES
-    PRIVATE ${LIBEVENT_LIBRARIES}
-    PRIVATE libevhtp::evhtp
+    PRIVATE h2o
+    PRIVATE h2o-evloop
+    PRIVATE uv
+    PRIVATE -lwslay
     PRIVATE protobuf::libprotobuf
     PRIVATE -lre2
+    PRIVATE -lnuma
   )
   if(${TRTIS_ENABLE_HTTP_V2})
     set(
-      HTTP_ENDPOINT_LIBRARIES 
-      ${HTTP_ENDPOINT_LIBRARIES} 
+      HTTP_ENDPOINT_LIBRARIES
+      ${HTTP_ENDPOINT_LIBRARIES}
       PRIVATE gRPC::grpc++
       PRIVATE gRPC::grpc
     )
