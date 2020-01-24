@@ -556,7 +556,8 @@ S3FileSystem::ParsePath(
     const std::string& path, std::string* bucket, std::string* object)
 {
   // Get the bucket name and the object path. Return error if input is malformed
-  re2::RE2 s3_regex("s3://([a-z]+):([0-9]+)/([0-9a-z.-]+)(((/[0-9a-z.-_]+)*)?)");
+  re2::RE2 s3_regex(
+      "s3://([a-z]+):([0-9]+)/([0-9a-z.-]+)(((/[0-9a-z.-_]+)*)?)");
   std::string host_name, host_port;
   if (!RE2::FullMatch(path, s3_regex, &host_name, &host_port, bucket, object)) {
     int bucket_start = path.find("s3://") + 5;
@@ -597,7 +598,9 @@ S3FileSystem::S3FileSystem(
     config.scheme = Aws::Http::Scheme::HTTP;
   }
 
-  client_ = s3::S3Client(config, Aws::Client::AWSAuthV4Signer::PayloadSigningPolicy::Never, /*useVirtualAdressing*/false);
+  client_ = s3::S3Client(
+      config, Aws::Client::AWSAuthV4Signer::PayloadSigningPolicy::Never,
+      /*useVirtualAdressing*/ false);
 }
 
 S3FileSystem::~S3FileSystem()
@@ -868,17 +871,14 @@ GetFileSystem(const std::string& path, FileSystem** file_system)
         "s3:// file-system not supported. To enable, build with "
         "-DTRTIS_ENABLE_S3=ON.");
 #else
-    re2::RE2 s3_regex("s3://([a-z]+):([0-9]+)/([0-9a-z.-]+)(((/[0-9a-zA-Z.-_]+)*)?)");
+    re2::RE2 s3_regex(
+        "s3://([a-z]+):([0-9]+)/([0-9a-z.-]+)(((/[0-9a-zA-Z.-_]+)*)?)");
     std::string host_name, host_port, bucket, object;
     if (!RE2::FullMatch(
             path, s3_regex, &host_name, &host_port, &bucket, &object)) {
       host_name = "";
       host_port = "";
     }
-
-    // return Status(
-    //     RequestStatusCode::INTERNAL, std::string("local_path: " + host_name + ":" + host_port).c_str());
-
 
     Aws::SDKOptions options;
     Aws::InitAPI(options);
@@ -912,7 +912,33 @@ JoinPath(std::initializer_list<std::string> segments)
 
   for (const auto& seg : segments) {
     if (joined.empty()) {
+#ifdef TRTIS_ENABLE_S3
+      // Check if this is an S3 path (s3://$BUCKET_NAME)
+      if (!seg.empty() && !seg.rfind("s3://", 0)) {
+        re2::RE2 s3_regex(
+            "s3://([a-z]+):([0-9]+)/([0-9a-z.-]+)(((/[0-9a-zA-Z.-_]+)*)?)");
+        std::string host_name, host_port, bucket, object;
+        if (!RE2::FullMatch(
+                seg, s3_regex, &host_name, &host_port, &bucket, &object)) {
+          int bucket_start = seg.find("s3://") + 5;
+          int bucket_end = seg.find("/", bucket_start);
+
+          // If there isn't a second slash, the address has only the bucket
+          if (bucket_end > bucket_start) {
+            bucket = seg.substr(bucket_start, bucket_end - bucket_start);
+            object = seg.substr(bucket_end + 1);
+          } else {
+            bucket = seg.substr(bucket_start);
+            object = "";
+          }
+          joined = seg;
+        } else {
+          joined = "s3://" + bucket + '/' + object;
+        }
+      }
+#elif
       joined = seg;
+#endif  // TRTIS_ENABLE_S3
     } else if (IsAbsolutePath(seg)) {
       if (joined[joined.size() - 1] == '/') {
         joined.append(seg.substr(1));
